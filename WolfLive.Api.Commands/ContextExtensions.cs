@@ -8,6 +8,16 @@ namespace WolfLive.Api.Commands
 
 	public static class ContextExtensions
 	{
+		public static Task<WolfMessage> DeleteMessage(this WolfContext context, Message message)
+		{
+			return context.Client.Delete(message);
+		}
+
+		public static Task<WolfMessage> DeleteMessage(this WolfContext context)
+		{
+			return context.Client.Delete(context.Message);
+		}
+
 		public static Task<MessageResponse> Reply(this WolfContext context, string message)
 		{
 			return context.Client.Reply(context.Message, message);
@@ -32,6 +42,7 @@ namespace WolfLive.Api.Commands
 		{
 			return context.Client.NextMessage(predicate);
 		}
+
 
 		public static Task<(Message message, GroupUser user)> NextGroupMessage(this WolfContext context)
 		{

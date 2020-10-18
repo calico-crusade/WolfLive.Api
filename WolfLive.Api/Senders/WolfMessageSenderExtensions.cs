@@ -9,6 +9,7 @@ namespace WolfLive.Api
 	public static class WolfMessageSenderExtensions
 	{
 		private const string CMD_MESSAGE = "message send";
+		private const string CMD_UPDATE = "message update";
 		private const string MIMETYPE_TEXT = "text/plain";
 		private const string MIMETYPE_IMAGE = "image/jpeg";
 		private const string FLIGHT_ID_BASE = "0000000";
@@ -137,6 +138,38 @@ namespace WolfLive.Api
 		public static Task<Message> NextGroupMessage(this IWolfClient client, string groupId, string userId)
 		{
 			return client.NextMessage(t => t.IsGroup && t.GroupId == groupId && t.UserId == userId);
+		}
+
+		public static Task<WolfMessage> Delete(this IWolfClient client, string id, bool isGroup, DateTime timestamp)
+		{
+			return Delete(client, id, isGroup, timestamp.Ticks);
+		}
+
+		public static Task<WolfMessage> Delete(this IWolfClient client, string id, bool isGroup, long timestamp)
+		{
+			if (!int.TryParse(id, out int recipientId))
+				throw new FormatException("Id needs to be a number");
+
+			return client.Emit<WolfMessage>(new Packet(CMD_UPDATE, new
+			{
+				recipientId,
+				timestamp,
+				isGroup,
+				metadata = new
+				{
+					isDeleted = true
+				}
+			}));
+		}
+
+		public static Task<WolfMessage> Delete(this IWolfClient client, Message message)
+		{
+			return client.Delete(message.IsGroup ? message.GroupId : message.UserId, message.IsGroup, message.Timestamp.Ticks);
+		}
+
+		public static Task<WolfMessage> Delete(this Message message, IWolfClient client)
+		{
+			return client.Delete(message.IsGroup ? message.GroupId : message.UserId, message.IsGroup, message.Timestamp.Ticks);
 		}
 	}
 }

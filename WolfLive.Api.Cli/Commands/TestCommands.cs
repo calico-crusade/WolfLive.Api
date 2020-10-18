@@ -1,16 +1,27 @@
-﻿using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System;
+using System.Threading.Tasks;
 
 namespace WolfLive.Api.Cli
 {
 	using Commands;
-	using WolfLive.Api.Models;
+	using Exceptions;
+	using Models;
 
 	public class TestCommands : WolfContext
 	{
-		[Command("test1")]
-		public async Task Test1()
+		private readonly ILogger _logger;
+
+		public TestCommands(ILogger<TestCommands> logger)
 		{
-			await this.Reply("Hello world");
+			_logger = logger;
+		}
+
+		[Command("test1")]
+		public async Task Test1(string remainder)
+		{
+			await this.Reply("Hello world: " + remainder);
 		}
 
 		[Command("test2"), PrivateOnly]
@@ -29,6 +40,30 @@ namespace WolfLive.Api.Cli
 		public async Task Test4()
 		{
 			await this.Reply("Hello world");
+		}
+
+		[Command("delete this")]
+		public async Task DeleteThisTest()
+		{
+			try
+			{
+				var results = await this.DeleteMessage();
+				await this.Reply("Deleted message: " + JsonConvert.SerializeObject(results, Formatting.Indented));
+			}
+			catch (WolfSocketPacketException ex)
+			{
+				if (ex.Code == 403)
+				{
+					await this.Reply("You either have higher or the same group permissions (Admin/Mod) that I do! I can't delete your message!");
+					return;
+				}
+
+				_logger.LogError(ex, "Error occurred while deleting message, code: " + ex.Code);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error occurred while deleting message");
+			}
 		}
 	}
 

@@ -29,7 +29,24 @@ namespace WolfLive.Api.Models
 
         [JsonProperty("flightId")]
         public string FlightId { get; set; }
+
+        [JsonProperty("metadata")]
+        public Metadata Metadata { get; set; }
+
+        [JsonProperty("edited")]
+        public Edited Edited { get; set; }
     }
+
+    public class Metadata
+	{
+        public bool IsDeleted { get; set; }
+	}
+
+    public class Edited
+	{
+        public string SubscriberId { get; set; }
+        public long Timestamp { get; set; }
+	}
 
     public class Message
 	{
