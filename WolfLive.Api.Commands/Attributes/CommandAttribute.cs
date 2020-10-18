@@ -21,6 +21,7 @@ namespace WolfLive.Api.Commands
 			if (!content.ToLower().StartsWith(Comparitor))
 				return false;
 
+			content = content.Remove(0, Comparitor.Length).Trim();
 			return true;
 		}
 

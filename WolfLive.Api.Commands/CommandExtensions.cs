@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 
@@ -60,7 +62,18 @@ namespace WolfLive.Api.Commands
 				.AddSingleton(client)
 				.AddLogging(_ =>
 				{
-					logging?.Invoke(_);
+					if (logging != null)
+					{
+						logging(_);
+						return;
+					}
+
+					_.SetMinimumLevel(LogLevel.Debug);
+					_.AddSerilog(new LoggerConfiguration()
+						.WriteTo.File(Path.Combine("logs", "log.txt"), rollingInterval: RollingInterval.Day)
+						.WriteTo.Console()
+						.MinimumLevel.Debug()
+						.CreateLogger());
 				})
 				.BuildServiceProvider();
 

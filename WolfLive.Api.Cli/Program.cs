@@ -33,14 +33,6 @@ namespace WolfLive.Api.Cli
 					c.AddCommands<TestCommands>()
 					 .AddCommands<SomeStaticClass>()
 					 .WithPrefix("!");
-				}, l =>
-				{
-					l.SetMinimumLevel(LogLevel.Debug);
-					l.AddSerilog(new LoggerConfiguration()
-						.WriteTo.File(Path.Combine("logs", "log.txt"), rollingInterval: RollingInterval.Day)
-						.WriteTo.Console()
-						.MinimumLevel.Debug()
-						.CreateLogger());
 				});
 
 			client.Messaging.OnMessage += Messaging_OnMessage;
