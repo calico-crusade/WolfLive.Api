@@ -65,6 +65,12 @@ namespace WolfLive.Api.Cli
 				_logger.LogError(ex, "Error occurred while deleting message");
 			}
 		}
+
+		[Setup]
+		public void DoSetup(IWolfClient client)
+		{
+			client.Messaging.OnMessage += (c, m) => _logger.LogDebug($"Found message: {m.UserId}: {m.Content}");
+		}
 	}
 
 	public class SomeStaticClass

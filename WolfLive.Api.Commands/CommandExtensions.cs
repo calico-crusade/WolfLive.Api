@@ -36,6 +36,29 @@ namespace WolfLive.Api.Commands
 			return services;
 		}
 
+		public static IServiceCollection AddSetups<T>(this IServiceCollection services)
+		{
+			return services.AddSetups(typeof(T));
+		}
+
+		public static IServiceCollection AddSetups(this IServiceCollection services, params Type[] types)
+		{
+			foreach (var type in types)
+			{
+				foreach (var method in type.GetMethods())
+				{
+					var attributes = method.GetCustomAttributes<SetupAttribute>().ToList();
+
+					if (attributes.Count <= 0)
+						continue;
+
+					CommandService.Setups.Add(method);
+				}
+			}
+
+			return services;
+		}
+
 		public static IServiceCollection FindAllCommands(this IServiceCollection services)
 		{
 			var reflection = new ReflectionService();
@@ -85,6 +108,8 @@ namespace WolfLive.Api.Commands
 			{
 				await commands.ProcessMessage(c, m);
 			};
+
+			commands.TriggerSetup(client);
 
 			return client;
 		}

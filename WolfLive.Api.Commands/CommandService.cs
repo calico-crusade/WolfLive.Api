@@ -11,6 +11,7 @@ namespace WolfLive.Api.Commands
 	public interface ICommandService
 	{
 		Task ProcessMessage(IWolfClient client, Message message);
+		void TriggerSetup(IWolfClient client);
 	}
 
 	public class CommandService : ICommandService
@@ -20,6 +21,7 @@ namespace WolfLive.Api.Commands
 		private readonly ILogger _logger;
 
 		public readonly static List<(MethodInfo, List<IMessageFilter>)> Commands = new List<(MethodInfo, List<IMessageFilter>)>();
+		public readonly static List<MethodInfo> Setups = new List<MethodInfo>();
 		public static string Prefix { get; set; }
 
 		public CommandService(IServiceProvider provider, 
@@ -29,6 +31,14 @@ namespace WolfLive.Api.Commands
 			_provider = provider;
 			_reflection = reflection;
 			_logger = logger;
+		}
+
+		public async void TriggerSetup(IWolfClient client)
+		{
+			foreach(var setup in Setups)
+			{
+				await _reflection.ExecuteMethod(setup, _provider, client);
+			}
 		}
 
 		public async Task ProcessMessage(IWolfClient client, Message message)

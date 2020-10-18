@@ -1,9 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using SocketIOClient;
-using Serilog;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace WolfLive.Api.Cli
@@ -32,6 +29,7 @@ namespace WolfLive.Api.Cli
 				{
 					c.AddCommands<TestCommands>()
 					 .AddCommands<SomeStaticClass>()
+					 .AddSetups<TestCommands>()
 					 .WithPrefix("!");
 				});
 

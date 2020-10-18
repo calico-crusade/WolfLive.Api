@@ -354,7 +354,10 @@ namespace WolfLive.Api.Commands
             var result = ExecuteMethod(info, provider, out bool error, pars);
             if (error || result is Exception)
                 throw (Exception)result;
-            
+
+            if (info.ReturnType == typeof(void))
+                return;
+
             if (result is Task ||
                 result.GetType().GetGenericTypeDefinition() == typeof(Task<>))
 			{
