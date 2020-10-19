@@ -18,6 +18,8 @@ namespace WolfLive.Api
 
 		Task<bool> GroupMessageSubscribe(params string[] groupIds);
 
+		Task<bool> PrivateMessageSubscribe();
+
 		Task<Message> NextMessge(Func<Message, bool> predicate);
 	}
 

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 namespace WolfLive.Api
 {
 	using Models;
+	using System.Runtime.CompilerServices;
 
 	public static class WolfGeneralSenderExtensions
 	{
@@ -70,13 +71,22 @@ namespace WolfLive.Api
 			}
 		}
 
-		private static async Task OnLoginSuccess(IWolfClient client, User user)
+		private static async Task OnLoginSuccess(IWolfClient client, User user, bool first = true)
 		{
 
 			client.Profiling.Profile = user;
 
-			await client.Profiling.Initialize();
-			await client.Messaging.Initialize();
+			if (first)
+			{
+				await client.Profiling.Initialize();
+				await client.Messaging.Initialize();
+
+				client.OnConnected += async (c) => await OnLoginSuccess(client, user, false);
+				return;
+			}
+
+			await client.Messaging.GroupMessageSubscribe();
+			await client.Messaging.PrivateMessageSubscribe();
 		}
 		#endregion
 
