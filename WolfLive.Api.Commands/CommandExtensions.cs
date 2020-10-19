@@ -10,30 +10,18 @@ namespace WolfLive.Api.Commands
 {
 	public static class CommandExtensions
 	{
-		public static IServiceCollection AddCommands<T>(this IServiceCollection services)
+		public static ICommandBuilder AddCommands<T>(this IServiceCollection services)
 		{
 			return services.AddCommands(typeof(T));
 		}
 
-		public static IServiceCollection AddCommands(this IServiceCollection services, params Type[] types)
+		public static ICommandBuilder AddCommands(this IServiceCollection services, params Type[] types)
 		{
-			foreach(var type in types)
-			{
-				foreach(var method in type.GetMethods())
-				{
-					var attributes = method.GetCustomAttributes()
-										   .Where(t => t is IMessageFilter)
-										   .Cast<IMessageFilter>()
-										   .ToList();
+			var builder = new CommandBuilder();
+			builder.AddCommands(types);
 
-					if (attributes.Count <= 0)
-						continue;
-
-					CommandService.Commands.Add((method, attributes));
-				}
-			}
-
-			return services;
+			CommandService.CommandBuilders.Add(builder);
+			return builder;
 		}
 
 		public static IServiceCollection AddSetups<T>(this IServiceCollection services)
@@ -57,15 +45,6 @@ namespace WolfLive.Api.Commands
 			}
 
 			return services;
-		}
-
-		public static IServiceCollection FindAllCommands(this IServiceCollection services)
-		{
-			var reflection = new ReflectionService();
-
-			var types = reflection.GetTypes(t => true).ToArray();
-
-			return services.AddCommands(types);
 		}
 
 		public static IWolfClient AddCommands(this IWolfClient client, Action<IServiceCollection> config = null, Action<ILoggingBuilder> logging = null)
@@ -114,10 +93,13 @@ namespace WolfLive.Api.Commands
 			return client;
 		}
 
-		public static IServiceCollection WithPrefix(this IServiceCollection services, string prefix)
+		public static ICommandBuilder WithPrefix(this IServiceCollection services, string prefix)
 		{
-			CommandService.Prefix = prefix;
-			return services;
+			var builder = new CommandBuilder();
+			builder.WithPrefix(prefix);
+
+			CommandService.CommandBuilders.Add(builder);
+			return builder;
 		}
 	}
 }

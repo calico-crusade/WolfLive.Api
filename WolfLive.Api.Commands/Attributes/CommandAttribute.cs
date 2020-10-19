@@ -11,13 +11,8 @@ namespace WolfLive.Api.Commands
 			Comparitor = comparitor.ToLower().Trim();
 		}
 
-		public bool Validate(string prefix, ref string content)
+		public bool Validate(ref string content)
 		{
-			if (!content.ToLower().StartsWith(prefix))
-				return false;
-
-			content = content.Remove(0, prefix.Length).Trim();
-
 			if (!content.ToLower().StartsWith(Comparitor))
 				return false;
 
@@ -27,8 +22,8 @@ namespace WolfLive.Api.Commands
 
 		public override Task<bool> Validate(IWolfClient client, CommandMessage message)
 		{
-			var content = message.Message.Content;
-			var validation = Validate(message.Prefix, ref content);
+			var content = message.Remainder;
+			var validation = Validate(ref content);
 			message.Remainder = content;
 			message.Command = Comparitor;
 			return Task.FromResult(validation);

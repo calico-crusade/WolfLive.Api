@@ -27,10 +27,14 @@ namespace WolfLive.Api.Cli
 			var client = new WolfClient()
 				.AddCommands(c =>
 				{
-					c.AddCommands<TestCommands>()
-					 .AddCommands<SomeStaticClass>()
-					 .AddSetups<TestCommands>()
-					 .WithPrefix("!");
+					c.WithPrefix("!")
+					 .AddCommands<TestCommands>()
+					 .AddCommands<SomeStaticClass>();
+
+					c.WithPrefix(">")
+					 .AddCommands<TestCommands>();
+
+					c.AddSetups<TestCommands>();
 				});
 
 			client.Messaging.OnMessage += Messaging_OnMessage;

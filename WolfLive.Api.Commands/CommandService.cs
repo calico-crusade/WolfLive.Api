@@ -20,9 +20,8 @@ namespace WolfLive.Api.Commands
 		private readonly IReflectionService _reflection;
 		private readonly ILogger _logger;
 
-		public readonly static List<(MethodInfo, List<IMessageFilter>)> Commands = new List<(MethodInfo, List<IMessageFilter>)>();
+		public readonly static List<ICommandBuilder> CommandBuilders = new List<ICommandBuilder>();
 		public readonly static List<MethodInfo> Setups = new List<MethodInfo>();
-		public static string Prefix { get; set; }
 
 		public CommandService(IServiceProvider provider, 
 			IReflectionService reflection,
@@ -41,14 +40,72 @@ namespace WolfLive.Api.Commands
 			}
 		}
 
+		public async Task<bool> CheckCommands(ICommandBuilder commands, IWolfClient client, CommandMessage cmd)
+		{
+			if (!await Validate(commands, client, cmd))
+				return false;
+
+			var context = new StaticContext
+			{
+				Client = client,
+				Command = cmd
+			};
+
+			string msgWithoutPrefix = cmd.Remainder;
+
+			foreach (var (method, filters) in commands.Commands)
+			{
+				cmd.Remainder = msgWithoutPrefix;
+				if (!await CheckFilters(filters, client, cmd))
+					continue;
+
+				await _reflection.ExecuteMethod(method, _provider,
+					cmd, cmd.Message, cmd.Remainder,
+					cmd.GroupUser, cmd.GroupUser?.Group,
+					cmd.User, context, context.Capabilities,
+					client, this);
+				return true;
+			}
+
+			return false;
+		}
+
+		public async Task<bool> Validate(ICommandBuilder commands, IWolfClient client, CommandMessage message)
+		{
+			string content = message.Message.Content;
+			if (!ValidatePrefix(commands, ref content))
+				return false;
+
+			if (!await CheckFilters(commands.ScopedFilters, client, message))
+				return false;
+
+			message.Prefix = commands.Prefix;
+			message.Remainder = content;
+			return true;
+		}
+
+		public bool ValidatePrefix(ICommandBuilder commands, ref string content)
+		{
+			if (string.IsNullOrEmpty(content))
+				return false;
+
+			if (string.IsNullOrEmpty(commands.Prefix))
+				return true;
+
+			if (!content.ToLower().StartsWith(commands.Prefix))
+				return false;
+
+			content = content.Remove(0, commands.Prefix.Length).Trim();
+			return true;
+		}
+
 		public async Task ProcessMessage(IWolfClient client, Message message)
 		{
 			try
 			{
 				var cmd = new CommandMessage
 				{
-					Message = message,
-					Prefix = Prefix
+					Message = message
 				};
 
 				if (message.IsGroup)
@@ -61,23 +118,10 @@ namespace WolfLive.Api.Commands
 					cmd.User = await client.GetUser(message.UserId);
 				}
 
-				foreach (var (method, filters) in Commands)
+				foreach (var commands in CommandBuilders)
 				{
-					if (!await CheckFilters(filters, client, cmd))
-						continue;
-
-					var context = new StaticContext
-					{
-						Client = client,
-						Command = cmd
-					};
-
-					await _reflection.ExecuteMethod(method, _provider,
-						cmd, cmd.Message, cmd.Remainder,
-						cmd.GroupUser, cmd.GroupUser?.Group,
-						cmd.User, context, context.Capabilities,
-						client, this);
-					return;
+					if (await CheckCommands(commands, client, cmd))
+						return;
 				}
 			}
 			catch (Exception ex)
