@@ -15,6 +15,7 @@ namespace WolfLive.Api.Commands
 		ICommandBuilder AddCommands(params Type[] types);
 		ICommandBuilder AddCommands<T>();
 		ICommandBuilder AddFilters(params IMessageFilter[] filters);
+		ICommandBuilder AddFilters<T>() where T: IMessageFilter, new();
 		ICommandBuilder WithDescription(string description);
 		ICommandBuilder WithPrefix(string prefix);
 	}
@@ -60,6 +61,11 @@ namespace WolfLive.Api.Commands
 		{
 			ScopedFilters.AddRange(filters);
 			return this;
+		}
+
+		public ICommandBuilder AddFilters<T>() where T : IMessageFilter, new()
+		{
+			return AddFilters(new T());
 		}
 
 		public ICommandBuilder WithDescription(string description)

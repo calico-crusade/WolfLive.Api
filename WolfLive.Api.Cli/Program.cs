@@ -34,6 +34,14 @@ namespace WolfLive.Api.Cli
 					c.WithPrefix(">")
 					 .AddCommands<TestCommands>();
 
+					c.WithPrefix("$")
+					 .AddCommands<TestCommands>()
+					 .AddFilters<AlecOnly>();
+
+					c.WithPrefix("@")
+					 .AddCommands<TestCommands>()
+					 .AddFilters(new RoleAttribute("Admin"));
+
 					c.AddSetups<TestCommands>();
 				});
 

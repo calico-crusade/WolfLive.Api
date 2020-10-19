@@ -87,4 +87,13 @@ namespace WolfLive.Api.Cli
 			await context.Reply("Hello world: " + remainder);
 		}
 	}
+
+	public class AlecOnly : FilterAttribute
+	{
+		public override Task<bool> Validate(IWolfClient client, CommandMessage message)
+		{
+			var (_, user) = message;
+			return Task.FromResult(user.Id == "43681734");
+		}
+	}
 }
