@@ -103,6 +103,9 @@ namespace WolfLive.Api.Commands
 		{
 			try
 			{
+				if (message.UserId == client.CurrentUser().Id)
+					return;
+
 				var cmd = new CommandMessage
 				{
 					Message = message

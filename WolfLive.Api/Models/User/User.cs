@@ -5,7 +5,10 @@ namespace WolfLive.Api.Models
     public class User : IdHash
     {
         [JsonProperty("privileges")]
-        public long? Privileges { get; set; }
+        public long? PrivilegesFlag { get; set; }
+
+        [JsonIgnore]
+        public PrivilegeType Privileges => (PrivilegeType)(PrivilegesFlag ?? 0);
 
         [JsonProperty("nickname")]
         public string Nickname { get; set; }
