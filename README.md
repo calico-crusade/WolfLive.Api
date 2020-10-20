@@ -2,6 +2,8 @@
 An API for connecting to and creating bots for wolf.live in C#
 
 ## Installation
+You can view a more indepth tutorial on [the wiki](https://github.com/calico-crusade/WolfLive.Api/wiki)!
+
 You can get the project via nuget: `PM> Install-Package WolfLive.Api.Commands`
 
 Then to create a connection to the server and add some commands you can do:
@@ -23,12 +25,15 @@ namespace MyBot
                    password = "S0me P4$$W0RD";
 
             _client = new WolfClient()
-                .AddCommands(c => 
+                .SetupCommands()
+                .WithCommandSet(c => 
                 {
                     c.AddCommands<MyCommands>()
                      .AddCommands<MyStaticCommands>()
                      .WithPrefix("!");
-                });
+                })
+                .WithSerilog()
+                .Done();
 
             _client.OnConnected += (_) => Console.WriteLine("Connected to wolf.live!");
 
