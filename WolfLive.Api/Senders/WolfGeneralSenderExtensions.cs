@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 namespace WolfLive.Api
 {
 	using Models;
-	using System.Runtime.CompilerServices;
 
 	public static class WolfGeneralSenderExtensions
 	{
@@ -13,7 +12,7 @@ namespace WolfLive.Api
 		private const string CMD_WELCOME = "welcome";
 
 		private const string CMD_GRP_JOIN = "group member add";
-		private const string CMD_GRP_LEAVE = "group member leave";
+		private const string CMD_GRP_LEAVE = "group member delete";
 		private const string CMD_GRP_ADMIN = "group admin";
 
 		#region login extensions
@@ -76,11 +75,11 @@ namespace WolfLive.Api
 
 			client.Profiling.Profile = user;
 
+			await client.Profiling.Initialize();
+
 			if (first)
 			{
-				await client.Profiling.Initialize();
 				await client.Messaging.Initialize();
-
 				client.OnConnected += async (c) => await OnLoginSuccess(client, user, false);
 				return;
 			}

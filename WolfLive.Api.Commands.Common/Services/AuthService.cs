@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System;
+﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 
@@ -8,60 +6,122 @@ namespace WolfLive.Api.Commands.Common
 {
 	public interface IAuthService
 	{
-		bool ToggleUser(string userid);
-		bool ToggleUser(string userid, string groupid);
-
-		bool Validate(IWolfClient client, CommandMessage message);
-		bool Validate(string userid, string groupid = null);
+		bool UserHasRole(string role, string userId, string groupId = null);
+		bool RemoveUserRole(string role, string userId, string groupId = null);
+		bool AddUserRole(string role, string userId, string groupId = null);
+		bool ToggleUserRole(string role, string userId, string groupId = null);
 	}
 
 	public class AuthService : IAuthService
 	{
 		private AuthModel _authUsers = null;
-		private readonly ILogger _logger;
 
 		public string AuthUsersFilePath { get; set; } = "authusers.json";
 
-		public AuthService(ILogger<AuthService> logger)
-		{
-			_logger = logger;
-		}
+		public AuthModel AuthedUsers => _authUsers ??= LoadAuthUsers();
 
 		public AuthModel LoadAuthUsers()
 		{
-			try
+			if (!File.Exists(AuthUsersFilePath))
+				return new AuthModel();
+
+			var data = File.ReadAllText(AuthUsersFilePath);
+			return JsonConvert.DeserializeObject<AuthModel>(data);
+		}
+
+		public void SaveAuthUsers()
+		{
+			var data = JsonConvert.SerializeObject(_authUsers, Formatting.Indented);
+			File.WriteAllText(AuthUsersFilePath, data);
+		}
+
+		public bool UserHasRole(string role, string userId, string groupId = null)
+		{
+			role = role.ToLower().Trim();
+
+			if (!string.IsNullOrEmpty(groupId))
 			{
-				if (!File.Exists(AuthUsersFilePath))
-					return new AuthModel();
-
-				var data = File.ReadAllText(AuthUsersFilePath);
-				return JsonConvert.DeserializeObject<AuthModel>(data);
+				if (AuthedUsers.GroupRoles.ContainsKey(groupId) && 
+					AuthedUsers.GroupRoles[groupId].ContainsKey(userId) && 
+					AuthedUsers.GroupRoles[groupId][userId].Roles.Contains(role))
+					return true;
 			}
-			catch (Exception ex)
+
+			if (!AuthedUsers.GloablRoles.ContainsKey(userId))
+				return false;
+
+			return AuthedUsers.GloablRoles[userId].Roles.Contains(role);
+		}
+
+		public bool RemoveUserRole(string role, string userId, string groupId = null)
+		{
+			role = role.ToLower().Trim();
+
+			if (string.IsNullOrEmpty(groupId))
 			{
-				_logger.LogError(ex, "Error occurred while fetching authorized users list");
-				return null;
+				if (!AuthedUsers.GloablRoles.ContainsKey(userId))
+					return false;
+
+				if (!AuthedUsers.GloablRoles[userId].Roles.Contains(role))
+					return false;
+
+				AuthedUsers.GloablRoles[userId].Roles.Remove(role);
+				SaveAuthUsers();
+				return true;
 			}
+
+			if (!AuthedUsers.GroupRoles.ContainsKey(groupId))
+				return false;
+
+			if (!AuthedUsers.GroupRoles[groupId].ContainsKey(userId))
+				return false;
+
+			if (!AuthedUsers.GroupRoles[groupId][userId].Roles.Contains(role))
+				return false;
+
+			AuthedUsers.GroupRoles[groupId][userId].Roles.Remove(role);
+			SaveAuthUsers();
+			return true;
 		}
 
-		public bool ToggleUser(string userid)
+		public bool AddUserRole(string role, string userId, string groupId = null)
 		{
-			throw new NotImplementedException();
+			role = role.ToLower().Trim();
+
+			if (string.IsNullOrEmpty(groupId))
+			{
+				if (!AuthedUsers.GloablRoles.ContainsKey(userId))
+					AuthedUsers.GloablRoles.Add(userId, new UserRole { UserId = userId });
+
+				if (AuthedUsers.GloablRoles[userId].Roles.Contains(role))
+					return false;
+
+				AuthedUsers.GloablRoles[userId].Roles.Add(role);
+				SaveAuthUsers();
+				return true;
+			}
+
+			if (!AuthedUsers.GroupRoles.ContainsKey(groupId))
+				AuthedUsers.GroupRoles.Add(groupId, new Dictionary<string, UserRole>());
+
+			if (!AuthedUsers.GroupRoles[groupId].ContainsKey(userId))
+				AuthedUsers.GroupRoles[groupId].Add(userId, new UserRole { UserId = userId });
+
+			if (AuthedUsers.GroupRoles[groupId][userId].Roles.Contains(role))
+				return false;
+
+			AuthedUsers.GroupRoles[groupId][userId].Roles.Add(role);
+			return true;
 		}
 
-		public bool ToggleUser(string userid, string groupid)
+		public bool ToggleUserRole(string role, string userId, string groupId = null)
 		{
-			throw new NotImplementedException();
-		}
+			role = role.ToLower().Trim();
 
-		public bool Validate(IWolfClient client, CommandMessage message)
-		{
-			throw new NotImplementedException();
-		}
+			if (UserHasRole(role, userId, groupId))
+				return RemoveUserRole(role, userId, groupId);
 
-		public bool Validate(string userid, string groupid = null)
-		{
-			throw new NotImplementedException();
+			return AddUserRole(role, userId, groupId);
 		}
 	}
 }

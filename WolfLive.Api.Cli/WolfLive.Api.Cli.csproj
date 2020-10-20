@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\WolfLive.Api.Commands.Common\WolfLive.Api.Commands.Common.csproj" />
     <ProjectReference Include="..\WolfLive.Api.Commands\WolfLive.Api.Commands.csproj" />
     <ProjectReference Include="..\WolfLive.Api\WolfLive.Api.csproj" />
   </ItemGroup>

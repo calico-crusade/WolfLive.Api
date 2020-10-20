@@ -2,6 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>8.0</LangVersion>
+    <Version>1.0.0</Version>
+    <Authors>calico-crusade</Authors>
+    <Company>index-0.com</Company>
+    <Product>WolfLive.Api</Product>
+    <Description>A collection of helpful services and commands for ease of use when creating bots.</Description>
+    <PackageProjectUrl>https://github.com/calico-crusade/WolfLive.Api</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/calico-crusade/WolfLive.Api</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

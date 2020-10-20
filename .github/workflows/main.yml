@@ -45,3 +45,12 @@ jobs:
           PROJECT_FILE_PATH: WolfLive.Api.Commands/WolfLive.Api.Commands.csproj
           TAG_COMMIT: true
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+          
+          
+      - name: Publish Commands Nuget Package
+        id: publish_nuget_commands
+        uses: rohith/publish-nuget@v2
+        with:
+          PROJECT_FILE_PATH: WolfLive.Api.Commands.Common/WolfLive.Api.Commands.Common.csproj
+          TAG_COMMIT: true
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}

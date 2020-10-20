@@ -18,7 +18,7 @@ namespace WolfLive.Api
 		event ConnectionCarrier OnConnected;
 		event ConnectionErrorCarrier OnDisconnected;
 		event ConnectionErrorCarrier OnConnectionError;
-		event ReconnectionCarrier OnReconnected;
+		event ReconnectionCarrier OnReconnecting;
 		event ErrorCarrier OnError;
 
 		Task Connect();
@@ -46,7 +46,7 @@ namespace WolfLive.Api
 		public event ConnectionCarrier OnConnected = delegate { };
 		public event ConnectionErrorCarrier OnDisconnected = delegate { };
 		public event ConnectionErrorCarrier OnConnectionError = delegate { };
-		public event ReconnectionCarrier OnReconnected = delegate { };
+		public event ReconnectionCarrier OnReconnecting = delegate { };
 		public event ErrorCarrier OnError = delegate { };
 
 		public WolfClient(string server = SERVER_URL, string token = null, bool reconnect = true)
@@ -109,7 +109,7 @@ namespace WolfLive.Api
 
 		private void Client_OnReconnecting(object sender, int e)
 		{
-			OnReconnected(this, e);
+			OnReconnecting(this, e);
 		}
 
 		private void Client_OnError(object sender, string e)

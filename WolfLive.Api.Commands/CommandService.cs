@@ -10,8 +10,13 @@ namespace WolfLive.Api.Commands
 
 	public interface ICommandService
 	{
+		List<ICommandBuilder> CommandBuilders { get; }
+
 		Task ProcessMessage(IWolfClient client, Message message);
 		void TriggerSetup(IWolfClient client);
+		void AddCommandBuilders(params ICommandBuilder[] builders);
+		void AddSetups(params MethodInfo[] setups);
+		Task<bool> CheckFilters(List<IMessageFilter> filters, IWolfClient client, CommandMessage cmd);
 	}
 
 	public class CommandService : ICommandService
@@ -20,8 +25,8 @@ namespace WolfLive.Api.Commands
 		private readonly IReflectionService _reflection;
 		private readonly ILogger _logger;
 
-		public readonly static List<ICommandBuilder> CommandBuilders = new List<ICommandBuilder>();
-		public readonly static List<MethodInfo> Setups = new List<MethodInfo>();
+		public List<ICommandBuilder> CommandBuilders { get; } = new List<ICommandBuilder>();
+		public List<MethodInfo> Setups { get; } = new List<MethodInfo>();
 
 		public CommandService(IServiceProvider provider, 
 			IReflectionService reflection,
@@ -137,11 +142,24 @@ namespace WolfLive.Api.Commands
 		{
 			foreach (var filter in filters)
 			{
+				if (filter is DIFilterAttribute diFilter)
+					diFilter.Provider = _provider;
+
 				if (!await filter.Validate(client, cmd))
 					return false;
 			}
 
 			return true;
+		}
+
+		public void AddCommandBuilders(params ICommandBuilder[] builders)
+		{
+			CommandBuilders.AddRange(builders);
+		}
+
+		public void AddSetups(params MethodInfo[] setups)
+		{
+			Setups.AddRange(setups);
 		}
 	}
 }

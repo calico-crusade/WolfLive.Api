@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 namespace WolfLive.Api.Cli
 {
 	using Commands;
+	using Commands.Common;
 	using Models;
 
 	public class Program
@@ -25,25 +26,39 @@ namespace WolfLive.Api.Cli
 		public static async Task Start(string[] args)
 		{
 			var client = new WolfClient()
-				.AddCommands(c =>
+				.SetupCommands()
+				.WithCommandSet(c =>
 				{
 					c.WithPrefix("!")
+					 .WithDescription("Standard tests")
 					 .AddCommands<TestCommands>()
 					 .AddCommands<SomeStaticClass>();
-
+				})
+				.WithCommandSet(c =>
+				{
 					c.WithPrefix(">")
+					 .WithDescription("Different prefix tests!")
 					 .AddCommands<TestCommands>();
-
+				})
+				.WithCommandSet(c =>
+				{
 					c.WithPrefix("$")
+					 .WithDescription("Scoped filters test - Alec Only")
 					 .AddCommands<TestCommands>()
 					 .AddFilters<AlecOnly>();
-
+				})
+				.WithCommandSet(c =>
+				{
 					c.WithPrefix("@")
+					 .WithDescription("Scope filters test - Role Admin Only")
 					 .AddCommands<TestCommands>()
 					 .AddFilters(new RoleAttribute("Admin"));
-
-					c.AddSetups<TestCommands>();
-				});
+				})
+				.WithSetup<TestCommands>()
+				.WithAuthRoleAttributes()
+				.WithHelpCommand("!")
+				.WithSerilog()
+				.Done();
 
 			client.Messaging.OnMessage += Messaging_OnMessage;
 			client.Messaging.OnGroupMessage += Messaging_OnGroupMessage;
@@ -52,7 +67,7 @@ namespace WolfLive.Api.Cli
 			client.OnConnected += Client_OnConnected;
 			client.OnConnectionError += Client_OnConnectionError;
 			client.OnDisconnected += Client_OnDisconnected;
-			client.OnReconnected += Client_OnReconnected;
+			client.OnReconnecting += Client_OnReconnected;
 			client.Packeting.OnDataReceived += Client_OnDataReceived;
 
 			var loggedIn = await client.Login(args[0], args[1]);
