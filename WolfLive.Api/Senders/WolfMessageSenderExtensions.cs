@@ -13,20 +13,45 @@ namespace WolfLive.Api
 		private const string MIMETYPE_TEXT = "text/plain";
 		private const string MIMETYPE_IMAGE = "image/jpeg";
 		private const string FLIGHT_ID_BASE = "0000000";
+		private const int MAX_LENGTH = 1000;
+		private const int MSG_INTERVAL = 100;
 
-		public static Task<MessageResponse> Message(this IWolfClient client, string id, bool isGroup, object data, string mimeType = MIMETYPE_TEXT)
+		public static async Task<MessageResponse> Message(this IWolfClient client, string id, bool isGroup, object data, string mimeType = MIMETYPE_TEXT)
 		{
 			if (!int.TryParse(id, out int recipient))
 				throw new FormatException("Id needs to be a number");
 
-			return client.Emit<MessageResponse>(new Packet(CMD_MESSAGE, new
+			string msg;
+			if (MIMETYPE_TEXT != mimeType || (msg = data.ToString()).Length <= MAX_LENGTH)
+				return await client.Emit<MessageResponse>(new Packet(CMD_MESSAGE, new
+				{
+					recipient,
+					data,
+					mimeType,
+					isGroup,
+					flightId = FLIGHT_ID_BASE.Token()
+				}));
+
+			MessageResponse results = null;
+			for(var i = 0; i < msg.Length; i += MAX_LENGTH)
 			{
-				recipient,
-				data,
-				mimeType,
-				isGroup,
-				flightId = FLIGHT_ID_BASE.Token()
-			}));
+				var length = i + MAX_LENGTH > msg.Length ? msg.Length - i : MAX_LENGTH;
+				var part = msg.Substring(i, length);
+
+				if (i != 0 && MSG_INTERVAL > 0)
+					await Task.Delay(MSG_INTERVAL);
+
+				results = await client.Emit<MessageResponse>(new Packet(CMD_MESSAGE, new
+				{
+					recipient,
+					data = part,
+					mimeType,
+					isGroup,
+					flightId = FLIGHT_ID_BASE.Token()
+				}));
+			}
+
+			return results;
 		}
 
 		public static Task<MessageResponse> GroupMessage(this IWolfClient client, string groupId, string content)

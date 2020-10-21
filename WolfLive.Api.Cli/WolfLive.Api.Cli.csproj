@@ -17,4 +17,10 @@
     <ProjectReference Include="..\WolfLive.Api\WolfLive.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="settings_file.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

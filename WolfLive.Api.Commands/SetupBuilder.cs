@@ -12,6 +12,12 @@ namespace WolfLive.Api.Commands
 {
 	public interface ISetupBuilder
 	{
+		ISetupBuilder WithConfig(IConfiguration config);
+		ISetupBuilder WithConfig(params string[] files);
+
+		ISetupBuilder GetConfig<T>(out T item, string section = null) where T : new();
+		ISetupBuilder GetConfig<T>(T item, string section = null);
+
 		ISetupBuilder WithServices(Action<IServiceCollection> configure);
 		ISetupBuilder WithServices(IServiceCollection baseCollection);
 
@@ -40,6 +46,51 @@ namespace WolfLive.Api.Commands
 		public SetupBuilder(IWolfClient client)
 		{
 			_client = client;
+		}
+
+		public ISetupBuilder WithConfig(IConfiguration config)
+		{
+			Configuration = config;
+			return this;
+		}
+
+		public ISetupBuilder WithConfig(params string[] files)
+		{
+			if (Configuration != null)
+				throw new Exception("Cannot set configuration files because the config object has been explicitly defined.");
+
+			var root = new ConfigurationBuilder()
+				.AddEnvironmentVariables();
+
+			foreach(var file in files)
+			{
+				var ext = Path.GetExtension(file).ToLower().Trim('.');
+				switch(ext)
+				{
+					case "xml": root.AddXmlFile(file, false, true); break;
+					case "json": root.AddJsonFile(file, false, true); break;
+					case "ini": root.AddIniFile(file, false, true); break;
+					default: throw new Exception($"Settings file: \"{file}\" is not supported. Please use json, xml, or ini files");
+				}
+			}
+
+			return WithConfig(root.Build());
+		}
+
+		public ISetupBuilder GetConfig<T>(out T item, string section = null) where T: new()
+		{
+			item = new T();
+			return GetConfig(item, section);
+		}
+
+		public ISetupBuilder GetConfig<T>(T item, string section = null)
+		{
+			if (Configuration == null)
+				throw new Exception("Configuration object not yet set. Please use WithConfig(config) to set the configuration object!");
+
+			var config = string.IsNullOrEmpty(section) ? Configuration : Configuration.GetSection(section);
+			config.Bind(item);
+			return this;
 		}
 
 		public ISetupBuilder WithServices(Action<IServiceCollection> configure)
@@ -113,21 +164,21 @@ namespace WolfLive.Api.Commands
 
 		public IWolfClient Done()
 		{
-			var services = Services ?? new ServiceCollection();
+			var services = (Services ?? new ServiceCollection())
+				.AddTransient<IReflectionService, ReflectionService>()
+				.AddSingleton(_client)
+				.AddSingleton<ICommandService, CommandService>();
+
+			if (Configuration != null)
+				services.AddSingleton(Configuration);
 
 			foreach (var serviceConfigurator in DependencyInjectBuilders)
 				serviceConfigurator?.Invoke(services);
 
-			var provider = services
-				.AddTransient<IReflectionService, ReflectionService>()
-				.AddSingleton(_client)
-				.AddSingleton<ICommandService, CommandService>()
-				.BuildServiceProvider();
-
+			var provider = services.BuildServiceProvider();
 			services.AddSingleton<IServiceProvider>(provider);
 
 			var commandService = provider.GetRequiredService<ICommandService>();
-
 			foreach (var commandSet in CommandSets)
 				commandService.AddCommandBuilders(commandSet);
 

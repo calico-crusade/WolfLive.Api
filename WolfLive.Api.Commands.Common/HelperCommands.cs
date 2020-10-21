@@ -53,7 +53,7 @@ namespace WolfLive.Api.Commands.Common
 					var cmd = command.Item1.GetCustomAttributes<CommandAttribute>().FirstOrDefault()?.Comparitor;
 					var des = command.Item1.GetCustomAttributes<DescriptionAttribute>().FirstOrDefault()?.Text;
 
-					bob.AppendLine($"\t{set.Prefix} {cmd} - {des}");
+					bob.AppendLine($"{set.Prefix} {cmd} - {des}");
 				}
 			}
 

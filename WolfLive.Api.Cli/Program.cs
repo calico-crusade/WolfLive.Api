@@ -9,6 +9,11 @@ namespace WolfLive.Api.Cli
 	using Commands.Common;
 	using Models;
 
+	public class Settings
+	{
+		public string Prefix { get; set; }
+	}
+
 	public class Program
 	{
 		private static readonly bool DebugEvents = false;
@@ -27,6 +32,8 @@ namespace WolfLive.Api.Cli
 		{
 			var client = new WolfClient()
 				.SetupCommands()
+				.WithConfig("settings_file.json")
+				.GetConfig(out Settings settings)
 				.WithCommandSet(c =>
 				{
 					c.WithPrefix("!")
@@ -37,22 +44,16 @@ namespace WolfLive.Api.Cli
 				.WithCommandSet(c =>
 				{
 					c.WithPrefix(">")
-					 .WithDescription("Different prefix tests!")
-					 .AddCommands<TestCommands>();
+					 .WithDescription("Different prefix tests! - Admin only")
+					 .AddCommands<TestCommands>()
+					 .AddFilters(new RoleAttribute("Admin"));
 				})
 				.WithCommandSet(c =>
 				{
-					c.WithPrefix("$")
+					c.WithPrefix(settings.Prefix)
 					 .WithDescription("Scoped filters test - Alec Only")
 					 .AddCommands<TestCommands>()
 					 .AddFilters<AlecOnly>();
-				})
-				.WithCommandSet(c =>
-				{
-					c.WithPrefix("@")
-					 .WithDescription("Scope filters test - Role Admin Only")
-					 .AddCommands<TestCommands>()
-					 .AddFilters(new RoleAttribute("Admin"));
 				})
 				.WithSetup<TestCommands>()
 				.WithAuthRoleAttributes()
