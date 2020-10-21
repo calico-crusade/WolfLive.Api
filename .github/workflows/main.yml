@@ -48,7 +48,7 @@ jobs:
           
           
       - name: Publish Commands Nuget Package
-        id: publish_nuget_commands
+        id: publish_nuget_commands_common
         uses: rohith/publish-nuget@v2
         with:
           PROJECT_FILE_PATH: WolfLive.Api.Commands.Common/WolfLive.Api.Commands.Common.csproj
