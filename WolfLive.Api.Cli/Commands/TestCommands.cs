@@ -125,6 +125,13 @@ namespace WolfLive.Api.Cli
 		[Command("role test4"), AuthRole("test, again")] public async Task TestRole4() => await this.Reply("Kenobi!");
 
 		[Command("role test5"), AuthRole("test | again", '|')] public async Task TestRole5() => await this.Reply("/me swoosh");
+
+		[Command("group test")]
+		public async Task TestGroupUsers()
+		{
+			var users = await Client.GetGroupUsers(Group.Id);
+			await this.Reply("Group Users:\r\n" + string.Join("\r\n", users.Select(t => $"{t.User.Nickname} ({t.User.Id}) - {t.Capabilities}")));
+		}
 	}
 
 	public class SomeStaticClass

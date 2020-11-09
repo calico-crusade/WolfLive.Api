@@ -142,7 +142,7 @@ namespace WolfLive.Api
 
 		private async Task<User[]> ClientGetUsers(int[] ids)
 		{
-			var fetchedUsers = await _client.Emit<Dictionary<string, PacketResponse<User>>>(new Packet(CMD_PRF_USER, new
+			var fetchedUsers = await _client.Emit<List<PacketResponse<User>>>(new Packet(CMD_PRF_USER, new
 			{
 				extended = true,
 				subscribe = true,
@@ -153,11 +153,11 @@ namespace WolfLive.Api
 
 			foreach(var user in fetchedUsers)
 			{
-				if (!user.Value.Successful)
+				if (!user.Successful)
 					continue;
 
-				UserUpdate(user.Value.Body);
-				users.Add(user.Value.Body);
+				UserUpdate(user.Body);
+				users.Add(user.Body);
 			}
 
 			return users.ToArray();
