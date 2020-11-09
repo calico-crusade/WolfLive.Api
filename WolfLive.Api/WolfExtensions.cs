@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -17,6 +18,26 @@ namespace WolfLive.Api
 				results[i] = characters[RANDOM.Next(0, characters.Length)];
 
 			return string.Join("", results);
+		}
+
+		public static IEnumerable<T[]> Chunk<T>(this IEnumerable<T> data, int chunkSize)
+		{
+			var current = new List<T>();
+
+			foreach(var item in data)
+			{
+				current.Add(item);
+				if (current.Count == chunkSize)
+				{
+					yield return current.ToArray();
+					current = new List<T>();
+				}
+			}
+
+			if (current.Count == 0)
+				yield break;
+
+			yield return current.ToArray();
 		}
 
 		public static byte[] ToBuffer(this Bitmap bitmap)

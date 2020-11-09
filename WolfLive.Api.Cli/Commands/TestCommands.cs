@@ -129,6 +129,9 @@ namespace WolfLive.Api.Cli
 		[Command("group test")]
 		public async Task TestGroupUsers()
 		{
+			var group = await Client.GetGroup(Group.Id);
+			await this.Reply("Group: " + JsonConvert.SerializeObject(group, Formatting.Indented));
+
 			var users = await Client.GetGroupUsers(Group.Id);
 			await this.Reply("Group Users:\r\n" + string.Join("\r\n", users.Select(t => $"{t.User.Nickname} ({t.User.Id}) - {t.Capabilities}")));
 		}

@@ -29,6 +29,9 @@ namespace WolfLive.Api
 		private const string CMD_GRP_DELETE = "group member delete";
 		private const string CMD_GRP_ADD = "group member add";
 		private const string CMD_GRP_LIST = "group member list";
+		private const int PROFILE_REQUEST_LIMIT = 25;
+		private const int PROFILE_BREAK_COUNT = 4;
+		private const int PROFILE_BREAK_TIME = 1000;
 
 		private readonly IWolfClient _client;
 
@@ -142,16 +145,38 @@ namespace WolfLive.Api
 
 		private async Task<User[]> ClientGetUsers(int[] ids)
 		{
+			if (ids.Length <= PROFILE_REQUEST_LIMIT)
+				return await ClientGetUsersPacket(ids);
+
+			var idChunks = ids.Chunk(PROFILE_REQUEST_LIMIT).ToArray();
+			var users = new List<User>();
+
+			for(var i = 0; i < idChunks.Length; i++)
+			{
+				if (i % PROFILE_BREAK_COUNT == 0)
+					await Task.Delay(PROFILE_BREAK_TIME);
+
+				var chunk = idChunks[i];
+
+				var userChunk = await ClientGetUsersPacket(chunk);
+				users.AddRange(userChunk);
+			}
+
+			return users.ToArray();
+		}
+
+		private async Task<User[]> ClientGetUsersPacket(int[] ids)
+		{
 			var fetchedUsers = await _client.Emit<List<PacketResponse<User>>>(new Packet(CMD_PRF_USER, new
 			{
-				extended = true,
+				extended = false,
 				subscribe = true,
 				idList = ids
 			}));
 
 			var users = new List<User>();
 
-			foreach(var user in fetchedUsers)
+			foreach (var user in fetchedUsers)
 			{
 				if (!user.Successful)
 					continue;
